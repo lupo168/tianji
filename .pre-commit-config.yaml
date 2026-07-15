@@ -1,0 +1,22 @@
+repos:
+  # 官方 detect-secrets：拦截任何长得像密钥的字符串被 commit
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.5.0
+    hooks:
+      - id: detect-secrets
+        args: ["--baseline", ".secrets.baseline"]
+
+  # 天玑自定义检查：禁止采集器绕过网络白名单层
+  - repo: local
+    hooks:
+      - id: no-raw-requests
+        name: "天玑安全层：禁止采集器直接用 requests/urllib"
+        entry: python3 scripts/security/check_no_raw_requests.py
+        language: system
+        files: ^scripts/collectors/.*\.py$
+
+      - id: no-key-print
+        name: "天玑安全层：禁止打印/记录密钥明文"
+        entry: python3 scripts/security/check_no_key_print.py
+        language: system
+        types: [python]

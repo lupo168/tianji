@@ -1,0 +1,9 @@
+__pycache__/
+*.pyc
+.env
+*_key.txt
+
+# 天玑安全层运行时生成的审计文件，不提交进仓库
+scripts/security/pending_domains.yaml
+scripts/security/suspicious_content_log.yaml
+.secrets.baseline

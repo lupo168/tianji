@@ -1,0 +1,98 @@
+# 天玑网络白名单
+#
+# 只有这里列出的域名允许被 safe_requests 访问。
+# 新增域名前必须人工审核后再加进来，不允许采集器运行时自行决定访问新域名。
+# 支持通配写法，例如 "*.stlouisfed.org"
+
+allowed_domains:
+  # ① 汇率与宏观经济
+  - "cbr.ru"
+  - "www.cbr.ru"
+  - "api.exchangerate-api.com"
+  - "api.stlouisfed.org"
+  - "*.imf.org"
+  - "api.worldbank.org"
+  - "*.bankofengland.co.uk"
+  - "www.norges-bank.no"
+  - "www.riksbank.se"
+
+  # ② 新闻与行业动态
+  - "news.google.com"
+  - "feeds.bbci.co.uk"
+  - "www.bbc.com"
+  - "www.ftc.gov"
+  - "asia.nikkei.com"
+
+  # ③ 科技趋势
+  - "hacker-news.firebaseio.com"
+  - "*.wikipedia.org"
+
+  # ④ 政府监管与合规
+  - "api.fda.gov"
+  - "*.cpsc.gov"
+  - "*.fcc.gov"
+  - "*.uspto.gov"
+  - "*.ipo.gov.uk"
+  - "api.company-information.service.gov.uk"
+  - "www.gov.uk"
+  - "data.europa.eu"
+
+  # ⑥ 营销广告
+  - "www.facebook.com"       # Ad Library 公开接口
+  - "adstransparency.google.com"
+
+  # ⑦ SEO/GEO
+  - "trends.google.com"
+
+  # 按需搜索聚合工具（仅只读查询）
+  - "api.anysearch.com"
+  - "api.tavily.com"
+
+  # 大宗商品参考价
+  - "api.nbp.pl"
+
+  # 渠道/平台政策监控（只读检查可达性）
+  - "sellercentral.amazon.com"
+  - "changelog.shopify.com"
+  - "community.ebay.com"
+  - "sellerhelp.walmart.com"
+
+  # 政府开放数据（gov_open_data_collector 实际使用的域名）
+  - "apps.fcc.gov"
+  - "www.cpsc.gov"
+  - "developer.uspto.gov"
+  - "www.epa.gov"
+  - "dataservices.imf.org"
+  - "patents.google.com"
+  - "data.norges-bank.no"
+  - "api.riksbank.se"
+
+  # 新闻RSS
+  - "reutersagency.com"
+  - "www.nikkei.com"
+
+  # 营销/广告政策监控
+  - "www.facebook.com"
+  - "support.google.com"
+  - "ads.tiktok.com"
+  - "advertising.amazon.com"
+
+  # Reddit
+  - "www.reddit.com"
+  - "oauth.reddit.com"
+
+  # Telegram Bot API
+  - "api.telegram.org"
+
+  # YouTube Data API
+  - "www.googleapis.com"
+
+  # Wikipedia（补充具体子域，*.wikipedia.org 已覆盖，这里显式列出方便审查）
+  - "en.wikipedia.org"
+
+# 新增域名审核记录（谁加的、什么时候加的、为什么加）
+# 格式：- domain: xxx.com
+#        added_by: JUN
+#        date: 2026-07-15
+#        reason: 新增XX信源
+review_log: []
