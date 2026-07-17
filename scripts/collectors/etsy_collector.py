@@ -20,6 +20,7 @@
 
 import json, os, sys, time, argparse
 from datetime import datetime
+from urllib.parse import quote
 
 # 添加父目录到 path 以导入安全层
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -41,11 +42,10 @@ def etsy_get(path, params=None):
         return None
     url = f"{BASE}{path}"
     if params:
-        # 手动拼接避免 urlencode 的差异
         parts = []
         for k, v in params.items():
             if v is not None:
-                parts.append(f"{k}={v}")
+                parts.append(f"{k}={quote(str(v), safe='')}")
         if parts:
             url += "?" + "&".join(parts)
     return safe_get(url, headers={"x-api-key": API_KEY})
