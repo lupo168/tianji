@@ -59,6 +59,7 @@ def main():
             ("YouTube趋势", "collectors/youtube_collector.py"),
             ("Telegram行业监控", "collectors/telegram_collector.py"),
             ("大宗商品参考价", "collectors/commodity_collector.py"),
+            ("Etsy竞品情报", "collectors/etsy_collector.py"),
         ],
         "weekly": [],
         "monthly": [],
