@@ -87,15 +87,13 @@ def get_shop_reviews(shop_id, limit=20, offset=0):
 
 
 # ---------- 分析函数 ----------
-
 def analyze_prices(results):
+    """分析搜索结果的价格分布"""
     prices = []
     for r in results:
-        p = r.get("price", {})
-        if isinstance(p, dict):
-            prices.append(float(p.get("amount", 0)))
-        elif isinstance(p, (int, float)):
-            prices.append(float(p))
+        p = parse_price(r.get("price", {}))
+        if p > 0:
+            prices.append(p)
     if not prices:
         return {}
     return {
@@ -117,14 +115,30 @@ def analyze_tags(results):
 
 # ---------- 序列化辅助 ----------
 
+def parse_price(price_obj):
+    """Etsy API price: {amount, divisor, currency_code} → 实际金额"""
+    if isinstance(price_obj, dict):
+        amount = float(price_obj.get("amount", 0))
+        divisor = float(price_obj.get("divisor", 100))
+        return round(amount / divisor, 2)
+    if isinstance(price_obj, (int, float)):
+        return float(price_obj)
+    return 0
+
+def parse_currency(price_obj):
+    if isinstance(price_obj, dict):
+        return price_obj.get("currency_code")
+    return None
+
 def serialize_listing(r):
     """提取 Etsy 商品关键字段"""
+    price_obj = r.get("price", {})
     return {
         "title": (r.get("title") or "")[:120],
         "listing_id": r.get("listing_id"),
         "shop_id": r.get("shop_id"),
-        "price": r.get("price", {}).get("amount") if isinstance(r.get("price"), dict) else r.get("price"),
-        "currency": r.get("price", {}).get("currency_code") if isinstance(r.get("price"), dict) else None,
+        "price": parse_price(price_obj),
+        "currency": parse_currency(price_obj),
         "url": r.get("url"),
         "tags": r.get("tags", [])[:10],
         "review_count": r.get("reviews_count", 0),
@@ -238,10 +252,8 @@ def _run_shop_mode(args, today):
         print(f"  ✅ 商品列表: {len(results)} 条")
         for r in results[:5]:
             title = (r.get("title") or "?")[:60]
-            price = r.get("price", {})
-            if isinstance(price, dict):
-                price = price.get("amount", "?")
-            print(f"    📄 {title} | ${price}")
+            disp_price = parse_price(r.get("price", {}))
+            print(f"    📄 {title} | ${disp_price}")
 
         shop_listings = [serialize_listing(r) for r in results]
         output = {
