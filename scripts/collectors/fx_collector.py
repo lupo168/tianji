@@ -16,6 +16,7 @@
 import json
 import os
 from datetime import datetime
+from xml.etree import ElementTree as ET
 
 from scripts.security.safe_requests import get
 
@@ -25,13 +26,41 @@ os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 
 def fetch_cbr():
-    """俄罗斯央行汇率 (免费，境外可访问)"""
+    """俄罗斯央行汇率 (免费，境外可访问)
+
+    修复记录 (2026-07-18, A1审计项):
+      旧版只截取原始XML响应前500字符存为字符串，未做任何解析，
+      下游拿到的不是可用数字。现改为完整解析<Valute>节点，
+      输出 {CharCode: 1单位外币兑卢布数值} 的结构化字典。
+      CBR的Value字段用逗号做小数分隔符（俄语locale），需替换成点号再转float。
+    """
     url = "https://www.cbr.ru/scripts/XML_daily.asp"
     result = {"cbr_url": url}
     try:
         resp = get(url, reason="每日汇率采集-CBR", headers={"User-Agent": "Mozilla/5.0"}, timeout=15)
-        result["cbr_xml_daily"] = resp.content.decode("windows-1251")[:500]
-        result["cbr_status"] = "ok"
+        xml_text = resp.content.decode("windows-1251")
+        root = ET.fromstring(xml_text)
+
+        rates = {}
+        for valute in root.findall("Valute"):
+            char_code = valute.findtext("CharCode")
+            nominal_text = valute.findtext("Nominal", default="1")
+            value_text = valute.findtext("Value", default="")
+            if not char_code or not value_text:
+                continue
+            try:
+                nominal = float(nominal_text.replace(",", "."))
+                value = float(value_text.replace(",", "."))
+                # 统一换算成"1单位外币 = 多少卢布"，消除Nominal(比如100日元)的干扰
+                rates[char_code] = round(value / nominal, 6) if nominal else value
+            except ValueError:
+                continue
+
+        result["cbr_date"] = root.attrib.get("Date")
+        result["cbr_rates_rub"] = rates  # 例如 {"USD": 90.1234, "EUR": 98.5, ...}
+        result["cbr_status"] = "ok" if rates else "error: parsed 0 valid rates"
+    except ET.ParseError as e:
+        result["cbr_status"] = f"error: xml_parse_failed - {e}"
     except Exception as e:
         result["cbr_status"] = f"error: {e}"
     return result
