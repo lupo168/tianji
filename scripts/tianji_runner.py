@@ -63,6 +63,7 @@ def main():
             ("ProductHunt新品", "collectors/producthunt_collector.py"),
             ("公司融资情报", "collectors/company_intel_collector.py"),
             ("竞品定价监控", "collectors/pricing_monitor_collector.py"),
+            ("Agent Reach多源", "collectors/agentreach_collector.py"),
         ],
         "weekly": [],
         "monthly": [],
