@@ -1,11 +1,11 @@
 ---
 title: 天玑 · 全球商业情报系统
-version: v1.3
-date: 2026-07-23
+version: v1.5
+date: 2026-07-24
 author: Hermes Agent + JUN + Claude
 license: MIT
-description: 天玑是一个开源的全球商业信息采集底座框架。包含框架文档 + 可执行采集管道 + 每日自动日报 + 代码层强制的安全机制（网络白名单、密钥隔离、日报事实过滤、内容层防注入）。
-tags: [天玑, 商业情报, 开源, 信息采集, 安全机制]
+description: 天玑是一个开源的全球商业信息采集底座框架。包含框架文档 + 可执行采集管道 + 每日自动日报 + 代码层强制的安全机制（网络白名单、密钥隔离、日报事实过滤、内容层防注入）+ 真实性自检机制（每次运行自动生成结构化执行结果manifest）。
+tags: [天玑, 商业情报, 开源, 信息采集, 安全机制, 真实性自检]
 ---
 
 # 🌍 天玑 · 全球商业情报系统
@@ -46,25 +46,29 @@ python3 tianji_runner.py
 cat ~/tianji-data/reports/daily-$(date +%Y-%m-%d).md
 ```
 
+> **真实性自检（新增）**：每次运行`tianji_runner.py`后，会在`~/tianji-data/manifests/run-{时间戳}.json`生成一份结构化的"本次真实执行结果清单"——哪些采集器真正成功、哪些失败、耗时多久，以及本次是否触发了新的白名单外域名请求。**判断"天玑到底有没有覆盖某个数据源"，以这份manifest为准，不要以README的状态标记为准**——文档和代码会自然不同步，manifest是唯一自动生成、不需要人工维护就能反映真实状态的记录。
+
 ---
 
 ## 🗺️ 维度全景图（外眼9域 + 内镜6域）
 
 > 天玑内部分两个子系统：**外眼**采集外部公开信息（任何人理论上都能拿到，价值在于"比别人快、比别人系统"）；**内镜**接入自身经营的内部数据（私域/渠道后台/供应链履约等，完全独占，规划中，尚未启动）。下表为外眼9域的实测状态，2026-07-23核实。
 
-| 域 | 覆盖状态 | 对应采集器/说明 |
-|---|---|---|
-| ① 宏观经济与货币金融 | ✅ 覆盖较好 | `fx_collector.py`（汇率）、`commodity_collector.py`（大宗商品）；IMF/World Bank/BoE/挪威/瑞典央行经`gov_open_data_collector.py`覆盖 |
-| ② 政治与地缘博弈 | 🔴 研究完成，未实现 | GDELT/ACLED/ReliefWeb/OFAC/OpenSanctions等11个OSINT源已研究（见`reports/TOOL_RESEARCH.md`），尚无采集器 |
-| ③ 政策法规与认证合规 | ✅ 覆盖较好 | `gov_open_data_collector.py`：FDA/FCC/CPSC/USPTO/EPA/GOV.UK/UKIPO/EU Open Data。SASO/MOIAT/CNCA/NSF等认证已验证API但未实现采集 |
-| ④ 贸易、关税与海关 | ✅ 本版新增 | `customs_trade_collector.py`：UK Trade Tariff、OFAC/SDN制裁名单确认可用；WTO/EU TARIC仅做可达性检查；中国海关总署已知境外IP不可达，如实记录 |
-| ⑤ 需求与市场情报 | ⚠️ 部分覆盖 | `hn_trends_collector.py`、`wiki_trends_collector.py`、`reddit_collector.py`；电商平台（Amazon/Shopee/Lazada等）需注册开发者账号，未实现 |
-| ⑥ 竞争格局 | ✅ 覆盖较好 | `pricing_monitor_collector.py`、`company_intel_collector.py`、`etsy_collector.py`、`producthunt_collector.py` |
-| ⑦ 供应链与生产 | ⚠️ 部分覆盖 | `commodity_collector.py`覆盖原材料价格；B2B询价（如1688类）、国际物流运价指数仍缺 |
-| ⑧ 渠道、平台与传播生态 | ✅ 覆盖较好 | `channel_policy_collector.py`、`seo_geo_collector.py`、`marketing_intel_collector.py`、`reputation_capital_collector.py`、`youtube_collector.py`、`telegram_collector.py`、`agentreach_collector.py` |
-| ⑨ 支付与金融基础设施 | ✅ 本版新增 | `payment_finance_policy_collector.py`：Stripe/PayPal/Airwallex/Wise/Payoneer公开政策与费率页监控（仅可达性+内容对比，不解析具体费率数字） |
+| 域 | 覆盖状态 | 建议监控类型 | 对应采集器/说明 |
+|---|---|---|---|
+| ① 宏观经济与货币金融 | ✅ 覆盖较好 | 周期为主（部分触发式） | `fx_collector.py`（汇率）、`commodity_collector.py`（大宗商品）；IMF/World Bank/BoE/挪威/瑞典央行经`gov_open_data_collector.py`覆盖 |
+| ② 政治与地缘博弈 | 🔴 研究完成，未实现 | 触发式为主 | GDELT/ACLED/ReliefWeb/OFAC/OpenSanctions等11个OSINT源已研究（见`reports/TOOL_RESEARCH.md`），尚无采集器 |
+| ③ 政策法规与认证合规 | ✅ 覆盖较好 | 触发式+周期兜底 | `gov_open_data_collector.py`：FDA/FCC/CPSC/USPTO/EPA/GOV.UK/UKIPO/EU Open Data。SASO/MOIAT/CNCA/NSF等认证已验证API但未实现采集 |
+| ④ 贸易、关税与海关 | ✅ 本版新增 | 触发式为主 | `customs_trade_collector.py`：UK Trade Tariff、OFAC/SDN制裁名单确认可用；WTO/EU TARIC仅做可达性检查；中国海关总署已知境外IP不可达，如实记录 |
+| ⑤ 需求与市场情报 | ⚠️ 部分覆盖 | 周期为主 | `hn_trends_collector.py`、`wiki_trends_collector.py`、`reddit_collector.py`；电商平台（Amazon/Shopee/Lazada等）需注册开发者账号，未实现 |
+| ⑥ 竞争格局 | ✅ 覆盖较好 | 周期+触发式兼有 | `pricing_monitor_collector.py`、`company_intel_collector.py`、`etsy_collector.py`、`producthunt_collector.py` |
+| ⑦ 供应链与生产 | ⚠️ 部分覆盖 | 周期为主 | `commodity_collector.py`覆盖原材料价格；B2B询价（如1688类）、国际物流运价指数仍缺 |
+| ⑧ 渠道、平台与传播生态 | ✅ 覆盖较好 | 周期为主 | `channel_policy_collector.py`、`seo_geo_collector.py`、`marketing_intel_collector.py`、`reputation_capital_collector.py`、`youtube_collector.py`、`telegram_collector.py`、`agentreach_collector.py` |
+| ⑨ 支付与金融基础设施 | ✅ 本版新增 | 周期为主（政策变更触发式） | `payment_finance_policy_collector.py`：Stripe/PayPal/Airwallex/Wise/Payoneer公开政策与费率页监控（仅可达性+内容对比，不解析具体费率数字） |
 
 **外眼综合：9域中6域已实现（①③④⑥⑧⑨），2域部分实现（⑤⑦），1域研究完成待实现（②）。**
+
+> **关于"建议监控类型"**：这是每个域按时间特性应有的处理方式（详见`PRD.md`第4.1节）。其中标注"触发式"的域（如②地缘、④关税）一旦发生必须第一时间知道——但当前所有采集器统一按每日周期运行，尚无独立的触发式基础设施，存在窗口期错过风险，已列入路线图。
 
 内镜6域（客户关系与行为 / 渠道运营真实数据 / 供应链内部履约记录 / 内部财务健康度 / 内部一手反馈 / 组织与执行记录）目前均为规划状态，依赖业务方梳理内部系统接口权限后启动，详见`PRD.md`第2.3节。
 
@@ -168,7 +172,7 @@ cat ~/tianji-data/reports/daily-$(date +%Y-%m-%d).md
 
 | 文档 | 说明 |
 |------|------|
-| `PRD.md` | 天玑产品需求文档（v2.0，含边界定义/外眼内镜架构/维度全景图/路线图） |
+| `PRD.md` | 天玑产品需求文档（v2.3，含边界定义/外眼内镜+接口管理+数据合规四层架构/维度全景图含建议监控类型/方法论落地/路线图） |
 | `docs/开阳-PRD.md` | 开阳（AI分析层）产品需求文档 |
 | `docs/QIXING_ARCHITECTURE.md` | 天枢三层架构总览 |
 | `SOP.md` | 全流程标准作业程序 |
@@ -314,3 +318,6 @@ MIT License — 自由使用、修改、分发。
 |---|---|
 | v1.2 | 新增营销广告/KOL、SEO/GEO、品牌声誉三个维度的v2采集器 |
 | v1.3 | 修正"功能地图"一节此前重复粘贴、互相矛盾的两张统计表；改用外眼9域/内镜6域的MECE框架替代原12维度描述；新增关税贸易、支付金融两个采集器（20个采集器，非此前的6-13个不等的各版本描述）；目录结构改为实测核实版本；补充`docs/开阳-PRD.md`索引；标注历史审计文档过时风险与`safe_requests.py`重复文件风险 |
+| v1.4 | `tianji_runner.py`升级：正式接入关税贸易、支付金融两个采集器（此前只是文件存在，未在runner里注册）；实现真实性自检机制——每次运行生成`~/tianji-data/manifests/run-{时间戳}.json`结构化执行结果清单，并自动检测本次是否触发新的白名单外域名请求 |
+| v1.5 | 跟随`PRD.md` v2.2 跨文档对齐：文档索引中PRD引用更新至v2.2（含外眼内镜+接口管理+数据合规四层架构）；维度表⑧渠道传播的`marketing_intel_collector.py`与PRD保持一致（不再重复挂入⑥竞争格局）；IMF/World Bank等央行数据归属①宏观经济（本README此前即如此，本次确认与PRD对齐） |
+| v1.6 | 跟随`PRD.md` v2.3：维度表新增"建议监控类型"列（取自地基7.1，落地地基6.3）；文档索引PRD引用更新至v2.3（含维度全景图带建议监控类型/方法论落地/路线图） |
